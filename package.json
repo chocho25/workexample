@@ -1,0 +1,25 @@
+{
+  "name": "workgeo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WorkGeo — location-aware business discovery platform",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w @workgeo/api\" \"npm run dev -w @workgeo/web\"",
+    "build": "npm run build -w @workgeo/api && npm run build -w @workgeo/web",
+    "lint": "npm run lint -w @workgeo/api && npm run lint -w @workgeo/web",
+    "test": "npm run test -w @workgeo/api",
+    "db:generate": "npm run db:generate -w @workgeo/api",
+    "db:migrate": "npm run db:migrate -w @workgeo/api",
+    "db:seed": "npm run db:seed -w @workgeo/api",
+    "db:studio": "npm run db:studio -w @workgeo/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

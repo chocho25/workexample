@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: workgeo
+          POSTGRES_PASSWORD: workgeo_dev
+          POSTGRES_DB: workgeo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://workgeo:workgeo_dev@localhost:5432/workgeo?schema=public
+      JWT_SECRET: ci-test-secret-minimum-32-characters-long
+      CORS_ORIGIN: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate -w @workgeo/api
+
+      - name: Run migrations
+        run: npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+
+      - name: Seed database
+        run: npm run db:seed -w @workgeo/api
+
+      - name: Run tests
+        run: npm run test -w @workgeo/api
+
+      - name: Build API
+        run: npm run build -w @workgeo/api
+
+      - name: Build Web
+        run: npm run build -w @workgeo/web
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true
